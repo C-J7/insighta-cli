@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: insighta-cli
+Version: 1.0.0
+Requires-Dist: click==8.1.7
+Requires-Dist: requests==2.31.0
+Requires-Dist: rich==13.7.1
+Dynamic: requires-dist
