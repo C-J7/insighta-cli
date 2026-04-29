@@ -201,3 +201,6 @@ def export(format, gender, country_id):
             console.print(f"[green]Successfully exported data to {os.getcwd()}/{filename}[/green]")
         except Exception as e:
             console.print(f"[red]Export Failed: {e}[/red]")
+
+if __name__ == "__main__":
+    cli()
