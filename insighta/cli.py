@@ -162,3 +162,42 @@ def search(query):
     for p in data.get("data", []):
         table.add_row(p["name"].title(), p["gender"], str(p["age"]), p["country_id"])
     console.print(table)
+
+@profiles.command()
+@click.option('--name', required=True, help='Name of the profile to create')
+def create(name):
+    """Create a new profile (Admin Only)."""
+    with console.status("[cyan]Generating intelligence profile...[/cyan]"):
+        try:
+            resp = api.request("POST", "/api/profiles", json={"name": name})
+            if resp.status_code == 403:
+                console.print("[red]Permission Denied: Only Admins can create profiles.[/red]")
+                return
+            resp.raise_for_status()
+            data = resp.json().get("data", {})
+            console.print(f"[green]Profile Created![/green] {data.get('name').title()} - {data.get('age')} years old, {data.get('country_name')}")
+        except Exception as e:
+            console.print(f"[red]Failed to create profile: {e}[/red]")
+
+@profiles.command()
+@click.option('--format', default='csv', help='Export format')
+@click.option('--gender', help='Filter by gender')
+@click.option('--country', 'country_id', help='Filter by country ISO code')
+def export(format, gender, country_id):
+    """Export profiles to a CSV file."""
+    params = {k: v for k, v in locals().items() if v is not None}
+    
+    with console.status("[cyan]Generating Export...[/cyan]"):
+        try:
+            resp = api.request("GET", "/api/profiles/export", params=params)
+            resp.raise_for_status()
+            
+            # Extract filename from headers or use default
+            content_disp = resp.headers.get("Content-Disposition", "")
+            filename = content_disp.split("filename=")[-1].strip('"') if "filename=" in content_disp else "export.csv"
+            
+            with open(filename, 'wb') as f:
+                f.write(resp.content)
+            console.print(f"[green]Successfully exported data to {os.getcwd()}/{filename}[/green]")
+        except Exception as e:
+            console.print(f"[red]Export Failed: {e}[/red]")
