@@ -1,4 +1,7 @@
 import click
+import requests
+import os 
+import webbrowser
 from urllib.parse import urlencode
 from http.server import HTTPServer
 from rich.console import Console
@@ -18,3 +21,45 @@ api = InsightaAPI()
 def cli():
     """Insighta Labs+ CLI """
     pass
+
+@cli.command()
+def login():
+    """Authenticate via GitHub using PKCE."""
+    state = os.urandom(16).hex()
+    code_verifier, code_challenge = generate_pkce_pair()
+    local_port = 8080
+    redirect_uri = f"http://localhost:{local_port}/callback"
+
+    # Get base GitHub URL from Backend
+    try:
+        resp = requests.get(f"{BACKEND_URL}/auth/github", params={"redirect_uri": redirect_uri})
+        resp.raise_for_status()
+        github_url = resp.json().get("url")
+    except Exception as e:
+        console.print(f"[red]Failed to contact backend: {e}[/red]")
+        return
+
+    # Append PKCE parameters
+    pkce_params = {
+        "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256"
+    }
+    auth_url = f"{github_url}&{urlencode(pkce_params)}"
+
+    console.print("[cyan]Opening browser for GitHub authentication...[/cyan]")
+    webbrowser.open(auth_url)
+
+    # Start local server to catch the callback
+    server = HTTPServer(('localhost', local_port), OAuthCallbackHandler)
+    server.auth_code = None
+    server.auth_state = None
+    server.handle_request() # Wait for exactly one request
+
+    if server.auth_state != state:
+        console.print("[red]Authentication failed: State mismatch. Possible CSRF attack.[/red]")
+        return
+
+    if not server.auth_code:
+        console.print("[red]Authentication failed: No code returned.[/red]")
+        return
