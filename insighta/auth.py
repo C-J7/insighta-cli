@@ -14,8 +14,13 @@ CREDENTIALS_FILE = CREDENTIALS_DIR / "credentials.json"
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
-    """Catches GitHub redirect callback locally."""
+    """Catches the GitHub redirect callback locally."""
     def do_GET(self):
+        if self.path.startswith('/favicon.ico'):
+            self.send_response(204)
+            self.end_headers()
+            return
+
         query_components = parse_qs(urlparse(self.path).query)
         self.server.auth_code = query_components.get('code', [None])[0]
         self.server.auth_state = query_components.get('state', [None])[0]
@@ -26,8 +31,12 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         html = """
         <html><body>
         <h1 style='color: #2f5c79; font-family: sans-serif; text-align: center; margin-top: 20%;'>
-            Authentication Successful! You can close this window.
+            Authentication Successful! You can close this window and return to your terminal.
         </h1>
+        <script>
+            // Attempt to automatically close the tab for a smoother UX
+            setTimeout(() => window.close(), 1000);
+        </script>
         </body></html>
         """
         self.wfile.write(html.encode('utf-8'))

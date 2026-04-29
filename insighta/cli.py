@@ -54,7 +54,10 @@ def login():
     server = HTTPServer(('localhost', local_port), OAuthCallbackHandler)
     server.auth_code = None
     server.auth_state = None
-    server.handle_request() # Wait for exactly one request
+    
+    # Keep handling requests until we get the auth code
+    while server.auth_code is None:
+        server.handle_request() 
 
     if server.auth_state != state:
         console.print("[red]Authentication failed: State mismatch. Possible CSRF attack.[/red]")
