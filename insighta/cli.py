@@ -88,3 +88,15 @@ def logout():
         pass # Ignore network errors on logout
     clear_credentials()
     console.print("[green]Logged out successfully.[/green]")
+
+@cli.command()
+def whoami():
+    """Display current user info."""
+    creds = load_credentials()
+    if creds:
+        console.print(f"[green]Logged in as @{creds.get('username')} (Role: {creds.get('role')})[/green]")
+    else:
+        console.print("[yellow]Not logged in.[/yellow]")
+
+
+        
