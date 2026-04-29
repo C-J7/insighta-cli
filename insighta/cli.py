@@ -63,3 +63,28 @@ def login():
     if not server.auth_code:
         console.print("[red]Authentication failed: No code returned.[/red]")
         return
+    
+    # Exchange code for tokens at the Backend
+    with console.status("[cyan]Exchanging code for tokens...[/cyan]"):
+        try:
+            exchange_resp = requests.get(
+                f"{BACKEND_URL}/auth/github/callback",
+                params={"code": server.auth_code, "code_verifier": code_verifier}
+            )
+            exchange_resp.raise_for_status()
+            data = exchange_resp.json()
+            save_credentials(data)
+            console.print(f"[green]Successfully logged in as @{data.get('username')} ({data.get('role')})[/green]")
+        except Exception as e:
+            console.print(f"[red]Failed to exchange tokens: {e}[/red]")
+
+
+@cli.command()
+def logout():
+    """Clear stored credentials."""
+    try:
+        api.request("POST", "/auth/logout")
+    except Exception:
+        pass # Ignore network errors on logout
+    clear_credentials()
+    console.print("[green]Logged out successfully.[/green]")
