@@ -11,3 +11,15 @@ A globally installable command-line interface for Insighta Labs+. Built with Pyt
    ```bash
 
    pip install -e
+
+## Testing
+
+To test the endpoints run:
+
+* python -m insighta.cli login
+* python -m insighta.cli whoami
+
+or Just:
+
+* insighta login
+* insighta whoami
